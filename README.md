@@ -324,6 +324,11 @@ docker build -t kubernetes-task-frontend:local ./frontend
 minikube image load kubernetes-task-api:local
 minikube image load kubernetes-task-frontend:local
 
+# Create the Secret only if it does not already exist.
+kubectl get secret auth-secret
+kubectl create secret generic auth-secret `
+  --from-literal=AUTH_TOKEN=local-dev-token
+
 kubectl apply -f k8s/auth-config.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
