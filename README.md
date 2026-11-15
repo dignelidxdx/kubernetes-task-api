@@ -2,6 +2,30 @@
 
 A small FastAPI task API for learning Kubernetes locally. The current version stores tasks in each process's memory. It provides a three-replica Deployment so you can observe Kubernetes replacing a deleted Pod.
 
+## Final result
+
+After starting the frontend and backend with Kubernetes and Ingress, the
+frontend displays the preloaded tasks and queries the backend through
+`GET /api/tasks`:
+
+![Final frontend result with Kubernetes](docs/images/kubernetes-final-result.png)
+
+### Swagger and OpenAPI
+
+The backend interactive documentation is available through Ingress at
+`http://task-api.local/api/docs`. The API uses OpenAPI 3.1 and exposes health,
+Pod information, and task-management endpoints:
+
+```text
+GET    /api/health
+GET    /api/info
+GET    /api/tasks
+POST   /api/tasks
+DELETE /api/tasks/{task_id}
+```
+
+![Kubernetes Task API Swagger UI with OpenAPI 3.1](docs/images/swagger-openapi-3-1.png)
+
 ## Run locally
 
 Requires Python 3.12 or a compatible Python 3 version.
@@ -42,41 +66,40 @@ Stop the services with:
 docker compose down
 ```
 
-## Eliminar el entorno
+## Remove the environment
 
-### Por qué es importante limpiar
+### Why cleanup matters
 
-Cada `Deployment` crea Pods y cada Pod consume recursos del clúster, como
-CPU, memoria, almacenamiento temporal y direcciones de red. Si se dejan
-activos Deployments de pruebas o variantes antiguas, pueden ocurrir estos
-problemas:
+Each `Deployment` creates Pods, and each Pod consumes cluster resources such as
+CPU, memory, temporary storage, and network addresses. Leaving test
+Deployments or old variants active can cause these problems:
 
-- Consumo innecesario de CPU y memoria.
-- Más Pods de los esperados y mayor dificultad para leer el estado real.
-- Peticiones distribuidas entre versiones o configuraciones equivocadas.
-- Services duplicados que dificultan saber qué endpoint probar.
-- Conflictos de puertos, rutas o nombres.
-- Resultados engañosos al probar réplicas, balanceo y autorreparación.
-- Mayor consumo y costo si el clúster está en un proveedor cloud.
+- Unnecessary CPU and memory consumption.
+- More Pods than expected, making the real state harder to understand.
+- Requests distributed across the wrong versions or configurations.
+- Duplicate Services that make endpoints harder to identify.
+- Port, route, or name conflicts.
+- Misleading results when testing replicas, load balancing, and self-healing.
+- Higher resource usage and cost in a cloud cluster.
 
-En este proyecto se deben conservar únicamente los recursos del flujo actual:
+This project should keep only the resources from the current workflow:
 
 ```text
 task-api Deployment        -> backend
-task-api Service           -> acceso interno al backend
+task-api Service           -> internal backend access
 task-frontend Deployment   -> frontend
-task-frontend Service      -> acceso interno al frontend
-task-api-ingress y         -> entrada HTTP del backend y frontend
+task-frontend Service      -> internal frontend access
+task-api-ingress and       -> HTTP entry point for the backend and frontend
 task-frontend-ingress
 ```
 
-Los Deployments antiguos como `task-api-nodeport`,
-`task-api-loadbalancer-v2` y `task-api-clusterip-v2` son variantes didácticas.
-Si ya no se están usando, conviene eliminarlos del clúster. Los Pods creados
-por un Deployment se eliminan al eliminar el Deployment, por lo que no hace
-falta borrarlos uno por uno.
+Old Deployments such as `task-api-nodeport`,
+`task-api-loadbalancer-v2`, and `task-api-clusterip-v2` are practice variants.
+Remove them from the cluster when they are no longer being used. Pods created
+by a Deployment are removed when the Deployment is deleted, so they do not
+need to be deleted one by one.
 
-Al terminar una práctica, primero eliminá los recursos de la aplicación:
+At the end of a practice session, first remove the application resources:
 
 ```powershell
 kubectl delete -f k8s/frontend/ --ignore-not-found
@@ -87,7 +110,7 @@ kubectl delete -f k8s/auth-config.yaml --ignore-not-found
 kubectl delete secret auth-secret --ignore-not-found
 ```
 
-Versión directa, cuando sabés que todos los recursos existen:
+Direct version, when you know all resources exist:
 
 ```powershell
 kubectl delete -f k8s/frontend/
@@ -98,35 +121,35 @@ kubectl delete -f k8s/auth-config.yaml
 minikube stop
 ```
 
-Si también usaste Docker Compose, asegurate de detenerlo:
+If you also used Docker Compose, stop it as well:
 
 ```powershell
 docker compose down
 ```
 
-Para conservar el clúster de Minikube pero liberar sus recursos:
+To keep the Minikube cluster but release its resources:
 
 ```powershell
 minikube stop
 ```
 
-Para eliminar completamente el clúster y sus imágenes locales de Minikube:
+To completely remove the cluster and its local Minikube images:
 
 ```powershell
 minikube delete
 ```
 
-Usá `minikube delete` solo cuando quieras empezar desde cero. No es necesario
-ejecutarlo después de cada práctica.
+Use `minikube delete` only when you want to start from scratch. It is not
+needed after every practice session.
 
-## Kubernetes con Minikube
+## Kubernetes with Minikube
 
-Kubernetes reemplaza la ejecución de Compose y administra los Pods, réplicas,
-Services, healthchecks e Ingress. Requiere Docker, Minikube y `kubectl`.
+Kubernetes replaces the Compose runtime and manages Pods, replicas, Services,
+healthchecks, and Ingress. Docker, Minikube, and `kubectl` are required.
 
 ### 1. Iniciar Minikube
 
-Si Compose está ejecutándose, detenelo primero para liberar los puertos:
+If Compose is running, stop it first to release the ports:
 
 ```powershell
 docker compose down
@@ -135,34 +158,34 @@ minikube status
 kubectl get nodes
 ```
 
-### 2. Habilitar Ingress
+### 2. Enable Ingress
 
 ```powershell
 minikube addons enable ingress
 kubectl get pods -n ingress-nginx
 ```
 
-### 3. Construir las imágenes
+### 3. Build the images
 
 ```powershell
 docker build -t kubernetes-task-api:local .
 docker build -t kubernetes-task-frontend:local ./frontend
 ```
 
-### 4. Cargar las imágenes en Minikube
+### 4. Load the images into Minikube
 
-Los manifiestos usan `imagePullPolicy: Never`, por lo que las imágenes deben
-existir dentro del entorno de Minikube:
+The manifests use `imagePullPolicy: Never`, so the images must exist inside
+the Minikube environment:
 
 ```powershell
 minikube image load kubernetes-task-api:local
 minikube image load kubernetes-task-frontend:local
 ```
 
-### Recargar una imagen después de modificar el código
+### Reload an image after changing the code
 
-Cuando cambies el backend o el frontend, reconstruí la imagen y volvela a
-cargar en Minikube. Después reiniciá el Deployment correspondiente:
+When you change the backend or frontend, rebuild the image and load it into
+Minikube again. Then restart the corresponding Deployment:
 
 Backend:
 
@@ -182,35 +205,35 @@ kubectl rollout restart deployment/task-frontend
 kubectl rollout status deployment/task-frontend
 ```
 
-Verificá los Pods después de la actualización:
+Verify the Pods after the update:
 
 ```powershell
 kubectl get pods
 ```
 
-Esto es necesario porque `imagePullPolicy: Never` usa la imagen local de
-Minikube y no descarga automáticamente una versión nueva desde Docker.
+This is required because `imagePullPolicy: Never` uses the local Minikube
+image and does not automatically download a new version from Docker.
 
-### 5. Crear el Secret requerido por el backend
+### 5. Create the Secret required by the backend
 
-Comprobar si ya existe:
+Check whether it already exists:
 
 ```powershell
 kubectl get secret auth-secret
 ```
 
-Si no existe, crearlo para el entorno local:
+If it does not exist, create it for the local environment:
 
 ```powershell
 kubectl create secret generic auth-secret `
   --from-literal=AUTH_TOKEN=local-dev-token
 ```
 
-### 6. Aplicar los manifiestos
+### 6. Apply the manifests
 
-Aplicar solo los manifiestos principales. Las variantes didácticas de
-`ClusterIP`, `NodePort` y `LoadBalancer` quedaron agrupadas en
-`k8s/practice/` y no se deben aplicar junto con el backend principal.
+Apply only the main manifests. The `ClusterIP`, `NodePort`, and `LoadBalancer`
+practice variants are grouped under `k8s/practice/` and should not be applied
+with the main backend.
 
 ```powershell
 kubectl apply -f k8s/auth-config.yaml
@@ -220,7 +243,7 @@ kubectl apply -f k8s/frontend/
 kubectl apply -f k8s/ingress.yaml
 ```
 
-### 7. Verificar los recursos
+### 7. Verify the resources
 
 ```powershell
 kubectl get deployments
@@ -231,19 +254,19 @@ kubectl rollout status deployment/task-api
 kubectl rollout status deployment/task-frontend
 ```
 
-Esperá 3 réplicas listas para `task-api` y 2 para `task-frontend`.
+Wait for 3 ready replicas for `task-api` and 2 for `task-frontend`.
 
-### 8. Probar cada Service con Minikube
+### 8. Test each Service with Minikube
 
-Estos comandos exponen temporalmente cada Service por separado y devuelven una
-URL local:
+These commands temporarily expose each Service separately and return a local
+URL:
 
 ```powershell
 minikube service task-api --url
 minikube service task-frontend --url
 ```
 
-El backend se puede probar con la URL resultante:
+Test the backend with the resulting URL:
 
 ```text
 <URL_BACKEND>/health
@@ -251,26 +274,26 @@ El backend se puede probar con la URL resultante:
 <URL_BACKEND>/tasks
 ```
 
-`minikube service task-frontend --url` sirve para comprobar que el frontend
-está vivo. Para que el frontend consulte al backend mediante `/api/tasks`, se
-debe usar el Ingress de la sección siguiente.
+`minikube service task-frontend --url` checks that the frontend is alive. To
+let the frontend query the backend through `/api/tasks`, use the Ingress in the
+next section.
 
-### 9. Probar frontend y backend juntos mediante Ingress
+### 9. Test the frontend and backend together through Ingress
 
-En otra terminal, ejecutar y dejar activo:
+In another terminal, run and leave this command active:
 
 ```powershell
 minikube tunnel
 ```
 
-Agregar como administrador esta línea al archivo
+As administrator, add this line to
 `C:\Windows\System32\drivers\etc\hosts`:
 
 ```text
 127.0.0.1 task-api.local
 ```
 
-La aplicación queda disponible en:
+The application is available at:
 
 ```text
 http://task-api.local/
@@ -279,21 +302,20 @@ http://task-api.local/api/docs
 http://task-api.local/api/health
 ```
 
-El backend recibe `ROOT_PATH=/api` mediante el ConfigMap cuando corre detrás
-del Ingress. Esto permite que Swagger UI busque correctamente el esquema en
-`/api/openapi.json` en lugar de consultar `/openapi.json` en el frontend.
+The backend receives `ROOT_PATH=/api` through the ConfigMap when running behind
+Ingress. This makes Swagger UI look for the schema at `/api/openapi.json`
+instead of requesting `/openapi.json` from the frontend.
 
-El enrutamiento es:
+The routing is:
 
 ```text
 /          -> task-frontend Service -> frontend Pods
 /api/...   -> task-api Service      -> backend Pods
 ```
 
-### Actualizar y volver a levantar el entorno
+### Update and start the environment again
 
-Después de modificar el backend, el frontend o el Ingress, ejecutá esta
-secuencia completa:
+After changing the backend, frontend, or Ingress, run this complete sequence:
 
 ```powershell
 docker build -t kubernetes-task-api:local .
@@ -307,7 +329,6 @@ kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 kubectl apply -f k8s/frontend/
 
-kubectl delete ingress example-ingress --ignore-not-found
 kubectl apply -f k8s/ingress.yaml
 
 kubectl rollout restart deployment/task-api
@@ -316,33 +337,33 @@ kubectl rollout status deployment/task-api
 kubectl rollout status deployment/task-frontend
 ```
 
-En otra terminal, dejá activo el túnel:
+In another terminal, leave the tunnel running:
 
 ```powershell
 minikube tunnel
 ```
 
-Luego recargá el navegador con `Ctrl + F5` y verificá en DevTools → Network:
+Then reload the browser with `Ctrl + F5` and verify in DevTools → Network:
 
 ```text
 app.js     200
 api/tasks  200
 ```
 
-## Formas de exponer los Services
+## Ways to expose the Services
 
-Hay dos alternativas para exponer los servicios en Minikube. No es necesario
-usar ambas al mismo tiempo.
+There are two ways to expose Services in Minikube. You do not need to use both
+at the same time.
 
-### Camino A: ClusterIP + Ingress — recomendado
+### Path A: ClusterIP + Ingress — recommended
 
-Los Services permanecen internos:
+The Services remain internal:
 
 ```yaml
 type: ClusterIP
 ```
 
-El acceso externo se concentra en el Ingress:
+External access is concentrated in the Ingress:
 
 ```powershell
 minikube addons enable ingress
@@ -350,7 +371,7 @@ minikube tunnel
 kubectl apply -f k8s/ingress.yaml
 ```
 
-Accesos:
+URLs:
 
 ```text
 http://task-api.local/          -> frontend
@@ -358,18 +379,18 @@ http://task-api.local/api/tasks -> backend
 http://task-api.local/api/docs  -> backend
 ```
 
-Este camino es el recomendado porque ofrece una única entrada HTTP y permite
-enrutar frontend y backend por host y path.
+This is the recommended path because it provides one HTTP entry point and
+routes the frontend and backend by host and path.
 
-### Camino B: LoadBalancer — exposición directa
+### Path B: LoadBalancer — direct exposure
 
-Para probar un Service sin Ingress, cambiar el tipo del Service a:
+To test a Service without Ingress, change the Service type to:
 
 ```yaml
 type: LoadBalancer
 ```
 
-Ejemplo para el backend:
+Backend example:
 
 ```yaml
 apiVersion: v1
@@ -386,7 +407,7 @@ spec:
   type: LoadBalancer
 ```
 
-Ejemplo para el frontend:
+Frontend example:
 
 ```yaml
 apiVersion: v1
@@ -403,7 +424,7 @@ spec:
   type: LoadBalancer
 ```
 
-Aplicar el cambio sobre los Services existentes y crear la IP externa local:
+Apply the change to the existing Services and create the local external IP:
 
 ```powershell
 kubectl patch service task-api -p '{"spec":{"type":"LoadBalancer"}}'
@@ -412,18 +433,18 @@ minikube tunnel
 kubectl get services
 ```
 
-También se puede obtener una URL temporal directamente con:
+You can also get a temporary URL directly with:
 
 ```powershell
 minikube service task-api --url
 minikube service task-frontend --url
 ```
 
-En este camino se prueban los servicios por separado. El frontend no usará
-automáticamente `/api/tasks` a través de un LoadBalancer independiente; para
-ese enrutamiento conjunto se debe usar el Camino A con Ingress.
+This path tests the Services separately. The frontend will not automatically
+use `/api/tasks` through an independent LoadBalancer; use Path A with Ingress
+for combined routing.
 
-### 10. Observar la autorreparación
+### 10. Observe self-healing
 
 To observe reconciliation, copy an actual Pod name from `kubectl get pods -l app=task-api`, then run:
 
