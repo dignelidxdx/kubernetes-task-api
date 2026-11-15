@@ -1,0 +1,13 @@
+$kind: http-request
+name: Tasks
+description: ""
+url: http://localhost:8000/tasks
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"title\": \"Pruebas de Kubernetes\"\r
+
+    }"
+order: 1000

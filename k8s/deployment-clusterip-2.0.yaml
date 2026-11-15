@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: task-api-clusterip-v2
+  labels:
+    app: task-api-clusterip-v2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: task-api-clusterip-v2
+  template:
+    metadata:
+      labels:
+        app: task-api-clusterip-v2
+    spec:
+      containers:
+        - name: task-api
+          image: kubernetes-task-api:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: auth-config
+            - secretRef:
+                name: auth-secret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: task-api-clusterip-v2
+spec:
+  type: ClusterIP
+  selector:
+    app: task-api-clusterip-v2
+  ports:
+    - port: 80
+      targetPort: 8000

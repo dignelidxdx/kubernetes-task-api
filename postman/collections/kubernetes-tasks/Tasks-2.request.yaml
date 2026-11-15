@@ -1,0 +1,6 @@
+$kind: http-request
+name: Tasks
+description: ""
+url: http://localhost:8000/tasks/1
+method: DELETE
+order: 2000
