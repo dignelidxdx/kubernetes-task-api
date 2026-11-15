@@ -1,8 +1,10 @@
 from itertools import count
+from os import getenv
 from socket import gethostname
 from threading import Lock
 
 from fastapi import FastAPI, HTTPException, Response, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 
@@ -16,15 +18,26 @@ class Task(BaseModel):
     completed: bool = False
 
 
-app = FastAPI(title="Kubernetes Task API")
-tasks: dict[int, Task] = {}
-task_ids = count(1)
+app = FastAPI(title="Kubernetes Task API", root_path=getenv("ROOT_PATH", ""))
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+tasks: dict[int, Task] = {
+    1: Task(id=1, title="Explorar la documentación de la API"),
+    2: Task(id=2, title="Consultar tareas desde el frontend"),
+    3: Task(id=3, title="Practicar Docker Compose"),
+}
+task_ids = count(max(tasks) + 1)
 store_lock = Lock()
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "hostname": gethostname()}
+    return {"status": "ok"}
 
 
 @app.get("/info")

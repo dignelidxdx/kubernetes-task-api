@@ -1,7 +1,28 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: example-ingress
+  name: task-api-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: task-api.local
+      http:
+        paths:
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: task-api
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: task-frontend-ingress
 spec:
   ingressClassName: nginx
   rules:
@@ -12,16 +33,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: task-api
+                name: task-frontend
                 port:
                   number: 80
-    - host: nuevo-host.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: web2
-                port:
-                  number: 8080

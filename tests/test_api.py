@@ -10,9 +10,7 @@ def test_health() -> None:
     response = client.get("/health")
     assert response.status_code == 200
     body = response.json()
-    assert body["status"] == "ok"
-    assert isinstance(body["hostname"], str)
-    assert body["hostname"]
+    assert body == {"status": "ok"}
 
 
 def test_info_includes_hostname() -> None:
@@ -22,17 +20,24 @@ def test_info_includes_hostname() -> None:
 
 
 def test_task_lifecycle() -> None:
-    assert client.get("/tasks").json() == []
+    default_tasks = client.get("/tasks").json()
+    assert default_tasks
+    next_id = max(task["id"] for task in default_tasks) + 1
 
     created = client.post("/tasks", json={"title": "Learn Kubernetes"})
     assert created.status_code == 201
     task = created.json()
-    assert task == {"id": 1, "title": "Learn Kubernetes", "completed": False}
-    assert client.get("/tasks").json() == [task]
+    assert task == {"id": next_id, "title": "Learn Kubernetes", "completed": False}
+    assert client.get("/tasks").json()[-1] == task
 
-    assert client.delete("/tasks/1").status_code == 204
-    assert client.get("/tasks").json() == []
-    assert client.delete("/tasks/1").status_code == 404
+    assert client.delete(f"/tasks/{next_id}").status_code == 204
+    assert task not in client.get("/tasks").json()
+    assert client.delete(f"/tasks/{next_id}").status_code == 404
+
+
+def test_tasks_allow_frontend_origin() -> None:
+    response = client.get("/tasks", headers={"Origin": "http://localhost:8080"})
+    assert response.headers["access-control-allow-origin"] == "http://localhost:8080"
 
 
 def test_empty_title_is_rejected() -> None:

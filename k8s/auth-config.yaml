@@ -4,3 +4,4 @@ metadata:
   name: auth-config
 data:
   AUTH_URL: "https://auth.example.local"
+  ROOT_PATH: "/api"

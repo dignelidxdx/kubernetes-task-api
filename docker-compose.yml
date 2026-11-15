@@ -1,0 +1,32 @@
+services:
+  task-api:
+    image: kubernetes-task-api:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - task-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    image: kubernetes-task-frontend:local
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      task-api:
+        condition: service_healthy
+    networks:
+      - task-network
+
+networks:
+  task-network:
+    driver: bridge
