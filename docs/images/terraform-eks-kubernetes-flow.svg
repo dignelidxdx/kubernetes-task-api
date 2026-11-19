@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="620" viewBox="0 0 1600 620" role="img" aria-labelledby="title desc">
+  <title id="title">Flujo Terraform, AWS EKS y Kubernetes</title>
+  <desc id="desc">Terraform manages AWS EKS infrastructure capacity; YAML manifests are applied to Kubernetes, which schedules and reconciles Pods.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#475569"/></marker>
+    <style>text { font-family: Arial, sans-serif; fill: #334155; } .box { stroke: #334155; stroke-width: 3; rx: 18; } .label { font-size: 18px; font-weight: 700; } .detail { font-size: 14px; } .edge { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }</style>
+  </defs>
+  <rect width="1600" height="620" fill="#ffffff"/>
+  <text x="800" y="70" text-anchor="middle" font-size="30" font-weight="700">Terraform → infraestructura AWS/EKS · YAML → Kubernetes → pods</text>
+  <rect class="box" x="60" y="210" width="280" height="160" fill="#c7d2fe"/>
+  <text class="label" x="80" y="255">Terraform</text><text class="detail" x="80" y="305">infra/terraform</text><text class="detail" x="80" y="335">import + plan + apply</text>
+  <rect class="box" x="450" y="210" width="320" height="160" fill="#fed7aa"/>
+  <text class="label" x="470" y="255">AWS / EKS</text><text class="detail" x="470" y="305">clúster existente</text><text class="detail" x="470" y="335">task-api-eks</text>
+  <rect class="box" x="890" y="70" width="280" height="160" fill="#bbf7d0"/>
+  <text class="label" x="910" y="115">Manifiestos YAML</text><text class="detail" x="910" y="165">k8s/</text><text class="detail" x="910" y="195">kubectl apply</text>
+  <rect class="box" x="890" y="350" width="280" height="160" fill="#bae6fd"/>
+  <text class="label" x="910" y="395">Kubernetes</text><text class="detail" x="910" y="445">API server / scheduler</text><text class="detail" x="910" y="475">reconcilia</text>
+  <rect class="box" x="1300" y="210" width="240" height="160" fill="#fef3c7"/>
+  <text class="label" x="1320" y="255">Pods</text><text class="detail" x="1320" y="305">API + frontend</text><text class="detail" x="1320" y="335">infraestructura</text>
+  <path class="edge" d="M340 290 H450"/><text class="detail" x="345" y="250">node group capacity</text>
+  <path class="edge" d="M1170 150 L1300 290"/><path class="edge" d="M1170 430 L1300 290"/><text class="detail" x="1175" y="350">schedules and reconciles</text>
+</svg>

@@ -66,6 +66,22 @@ Stop the services with:
 docker compose down
 ```
 
+Compose sets `ENVIRONMENT=local` and `STORAGE_BACKEND=memory`, so local data
+lives in memory and is lost when the API restarts. The Kubernetes Deployment
+sets `ENVIRONMENT=production` and `STORAGE_BACKEND=postgres`;
+`DATABASE_URL` continues to come from the `task-api-db` Secret and points to RDS.
+
+## Temporary AWS deployment
+
+The public test version was temporarily available at:
+
+<http://acf47c2450d1d4b3d82adbc4dc1d6ef4-1960850129.us-east-2.elb.amazonaws.com/>
+
+This endpoint is temporary and will be removed in approximately three days to
+avoid AWS costs. The previous local configuration is preserved in
+[`Minikube/`](Minikube/), separate from the AWS manifests and without credentials
+or RDS endpoints.
+
 ## Remove the environment
 
 ### Why cleanup matters
@@ -146,6 +162,25 @@ needed after every practice session.
 
 Kubernetes replaces the Compose runtime and manages Pods, replicas, Services,
 healthchecks, and Ingress. Docker, Minikube, and `kubectl` are required.
+
+## EKS capacity with Terraform (final advanced step)
+
+Once the manifests work, the final advanced step is managing the capacity of
+the existing `task-api-workers-v2` node group in the `task-api-eks` EKS cluster.
+The group was created with eksctl/CloudFormation and must not be replaced or
+confused with the example in `k8s/eks/simple-cluster.yaml`, which describes a
+different group.
+
+Terraform only imports and adjusts that group to minimum 1, desired 3, and
+maximum 3. It does not create another cluster or network resources. Increasing
+capacity allows the API and frontend to leave `Pending` caused by `Too many
+pods`; Pod CPU and memory resources remain the responsibility of their manifests.
+
+![Flujo Terraform, AWS/EKS y Kubernetes](docs/images/terraform-eks-kubernetes-flow.svg)
+
+See [`infra/terraform/README.md`](infra/terraform/README.md) for `terraform init`,
+`validate`, `plan`, and, only after reviewing the plan and explicitly confirming,
+`apply`. `apply` was not run and AWS was not modified by this repository change.
 
 ### 1. Iniciar Minikube
 

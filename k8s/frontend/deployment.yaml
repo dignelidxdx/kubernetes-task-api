@@ -5,7 +5,7 @@ metadata:
   labels:
     app: task-frontend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: task-frontend
@@ -16,10 +16,17 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: kubernetes-task-frontend:local
-          imagePullPolicy: Never
+          image: 647870083089.dkr.ecr.us-east-2.amazonaws.com/kubernetes-task-frontend:v2
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
           readinessProbe:
             httpGet:
               path: /

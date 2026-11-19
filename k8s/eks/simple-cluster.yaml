@@ -1,0 +1,27 @@
+# EKS cluster configuration for the Kubernetes Task API exercises.
+# Review the region and instance type before creating AWS resources.
+---
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: task-api-eks
+  region: us-east-2
+
+managedNodeGroups:
+  - name: task-api-workers
+    instanceType: t3.medium
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 3
+    labels:
+      workload: task-api
+    tags:
+      project: kubernetes-task-api
+      environment: learning
+
+cloudWatch:
+    clusterLogging:
+        # enable specific types of cluster control plane logs
+        enableTypes: ["audit", "authenticator", "controllerManager"]
+        logRetentionInDays: 5

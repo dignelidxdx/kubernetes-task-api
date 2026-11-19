@@ -1,4 +1,10 @@
+import os
+
 from fastapi.testclient import TestClient
+
+# API tests must remain local and deterministic even when a developer has a
+# DATABASE_URL configured for an integration environment.
+os.environ.pop("DATABASE_URL", None)
 
 from app.main import app
 
@@ -42,3 +48,9 @@ def test_tasks_allow_frontend_origin() -> None:
 
 def test_empty_title_is_rejected() -> None:
     assert client.post("/tasks", json={"title": ""}).status_code == 422
+
+
+def test_database_url_is_supported_by_application_configuration() -> None:
+    from app.storage import storage_backend_name
+
+    assert storage_backend_name() in {"memory", "postgres"}

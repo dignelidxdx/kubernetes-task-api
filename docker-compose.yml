@@ -6,6 +6,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    environment:
+      ENVIRONMENT: local
+      STORAGE_BACKEND: memory
     networks:
       - task-network
     healthcheck:
